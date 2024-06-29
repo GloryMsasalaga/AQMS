@@ -23,7 +23,7 @@ DHT dht(2, DHT22);
 // Define MQ135 pin
 const int MQ135PIN = 17;// A0
 
-String pushingBoxAPI = "http://api.pushingbox.com/pushingbox?devid=v192809FEEA0DEA7&";
+// String pushingBoxAPI = "http://api.pushingbox.com/pushingbox?devid=v192809FEEA0DEA7&";
 
 void setup() {
   // Initialize serial communication for debugging
@@ -154,7 +154,8 @@ void loop() {
   lcd.setCursor(0, 1); // second row
   lcd.print(tempStatus);
 
-  sendDataToGoogleSheets(temperature, tempStatus, humidity, humidStatus, gasLevel, gasStatus);
+  // sendDataToGoogleSheets(temperature, tempStatus, humidity, humidStatus, gasLevel, gasStatus);
+  sendDataToServer(temperature, tempStatus, humidity, humidStatus, gasLevel, gasStatus);
   
   delay(3000); // Wait a few seconds between measurements
 
@@ -181,33 +182,66 @@ void loop() {
   delay(3000); // Wait a few seconds before repeating
 }
 
-void sendDataToGoogleSheets(float temperature, String temperatureStatus, float humidity, String humidityStatus, int gasLevel, String gasLevelStatus){
-  // wait for WiFi connection
-  if ((WiFiMulti.run() == WL_CONNECTED)) {
+// void sendDataToGoogleSheets(float temperature, String temperatureStatus, float humidity, String humidityStatus, int gasLevel, String gasLevelStatus){
+//   // wait for WiFi connection
+//   if ((WiFiMulti.run() == WL_CONNECTED)) {
+//     WiFiClient client;
+//     HTTPClient http;
+//     String url = pushingBoxAPI + "temperature=" + (String)temperature + "&temperatureStatus=" + (String)temperatureStatus + "&humidity=" + (String)humidity + "&humidityStatus=" + (String)humidityStatus + "&gasLevel=" + (String)gasLevel + "&gasLevelStatus=" + (String)gasLevelStatus;
+
+//     Serial.print("[HTTP] begin...\n");
+//     if (http.begin(client, url)) {  // HTTP
+
+
+//       Serial.println("[HTTP] GET..." + (String)url);
+//       // start connection and send HTTP header
+//       int httpCode = http.GET();
+
+//       // httpCode will be negative on error
+//       if (httpCode > 0) {
+//         // HTTP header has been send and Server response header has been handled
+//         Serial.printf("[HTTP] GET... code: %d\n", httpCode);
+        
+//         // file found at server
+//         if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
+//           String payload = http.getString();
+//           Serial.println(payload);
+//         }
+//       } else {
+//         Serial.printf("[HTTP] GET... failed, error: %s\n", http.errorToString(httpCode).c_str());
+//       }
+
+//       http.end();
+//     } else {
+//       Serial.println("[HTTP] Unable to connect");
+//     }
+//   }
+//   delay(1000);
+// }
+
+void sendDataToServer(float temperature, String temperatureStatus, float humidity, String humidityStatus, int gasLevel, String gasLevelStatus) {
+  if (WiFiMulti.run() == WL_CONNECTED) {
     WiFiClient client;
     HTTPClient http;
-    String url = pushingBoxAPI + "temperature=" + (String)temperature + "&temperatureStatus=" + (String)temperatureStatus + "&humidity=" + (String)humidity + "&humidityStatus=" + (String)humidityStatus + "&gasLevel=" + (String)gasLevel + "&gasLevelStatus=" + (String)gasLevelStatus;
+    String url = "https://air-quality-monitor-two.vercel.app/update";
 
-    Serial.print("[HTTP] begin...\n");
-    if (http.begin(client, url)) {  // HTTP
+    String payload = "{";
+    payload += "\"temperature\":" + String(temperature) + ",";
+    payload += "\"temperatureStatus\":\"" + temperatureStatus + "\",";
+    payload += "\"humidity\":" + String(humidity) + ",";
+    payload += "\"humidityStatus\":\"" + humidityStatus + "\",";
+    payload += "\"gasLevel\":" + String(gasLevel) + ",";
+    payload += "\"gasLevelStatus\":\"" + gasLevelStatus + "\"";
+    payload += "}";
 
+    if (http.begin(client, url)) {
+      http.addHeader("Content-Type", "application/json");
+      int httpCode = http.POST(payload);
 
-      Serial.println("[HTTP] GET..." + (String)url);
-      // start connection and send HTTP header
-      int httpCode = http.GET();
-
-      // httpCode will be negative on error
       if (httpCode > 0) {
-        // HTTP header has been send and Server response header has been handled
-        Serial.printf("[HTTP] GET... code: %d\n", httpCode);
-        
-        // file found at server
-        if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
-          String payload = http.getString();
-          Serial.println(payload);
-        }
+        Serial.printf("[HTTP] POST... code: %d\n", httpCode);
       } else {
-        Serial.printf("[HTTP] GET... failed, error: %s\n", http.errorToString(httpCode).c_str());
+        Serial.printf("[HTTP] POST... failed, error: %s\n", http.errorToString(httpCode).c_str());
       }
 
       http.end();
@@ -217,3 +251,4 @@ void sendDataToGoogleSheets(float temperature, String temperatureStatus, float h
   }
   delay(1000);
 }
+
