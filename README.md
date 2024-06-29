@@ -1,6 +1,11 @@
 # AQMS
-the system is about Air Quality monitoring system in which the sensors detect temperature or humidity or gas either increases or decreases.
-the following code is from Apps scripts that connects my IoT system and a Google sheets.
+## Air Quality Monitoring System
+
+The system is about Air Quality Monitoring System in which the sensors detect temperature, humidity, and gas changes (either increases or decreases.)
+
+The following code from Apps scripts connects my IoT system to Google sheets.
+
+```cpp
 function doGet(e) {
   // Parse parameters from the URL query string
   var temperature = parseFloat(e.parameter.temperature);
@@ -31,3 +36,4 @@ function doGet(e) {
   return ContentService.createTextOutput(JSON.stringify(response))
     .setMimeType(ContentService.MimeType.JSON);
 }
+```
