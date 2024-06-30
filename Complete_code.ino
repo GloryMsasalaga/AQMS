@@ -222,6 +222,8 @@ void loop() {
 void sendDataToServer(float temperature, String temperatureStatus, float humidity, String humidityStatus, int gasLevel, String gasLevelStatus) {
   if (WiFiMulti.run() == WL_CONNECTED) {
     WiFiClient client;
+    client.setInsecure(); // disable SSL certificate
+    
     HTTPClient http;
     String url = "https://air-quality-monitor-two.vercel.app/update";
 
